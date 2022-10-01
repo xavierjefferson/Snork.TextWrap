@@ -1,3 +1,4 @@
+
 # Snork.TextWrap
 Text Wrapping and Filling
 
@@ -59,7 +60,7 @@ Fill a single paragraph of text, returning a new string. Reformat the single par
     public static string Shorten(string text, int width, ShortenTextWrapperOptions? options = null)
 Collapse and truncate the given text to fit in the given width.  The text first has its whitespace collapsed.  If it then fits in the `width`, it is returned as is.  Otherwise, as many words as possible are joined and then the placeholder is appended.
 
-The ShortenTextWrapperOptions class works very similarly to the TextWrapperOptions class, except that you can't specify `MaxLines`.
+The `ShortenTextWrapperOptions` class works very similarly to the `TextWrapperOptions` class, except that you can't specify `MaxLines`.
 ### Indent
     public static string Indent(string text, string prefix, Func<string, bool>? predicate = null)'
 Adds `prefix` to the beginning of selected lines in `text`. If `predicate` is provided, `prefix` will only be added to the lines where `predicate(line)` is true. If `predicate` is not provided, it will default to adding `prefix` to all non-empty lines that do not consist solely of whitespace characters.
@@ -76,7 +77,7 @@ Entirely blank lines are normalized to a newline character.
 (default: `true`) If `true`, then words longer than `width` will be broken in order to ensure that no lines are longer than width. If it is false, long words will not be broken, and some lines may be longer than `width`. (Long words will be put on a line by themselves, in order to minimize the amount by which width is exceeded.)
 ### BreakOnHyphens
     public virtual bool BreakOnHyphens { get; set; };
-(default: `true`) If `true`, wrapping will occur preferably on whitespaces and right after hyphens in compound words, as it is customary in English. If false, only whitespaces will be considered as potentially good places for line breaks, but you need to set BreakLongWords to false if you want truly insecable words.
+(default: `true`) If `true`, wrapping will occur preferably on whitespaces and right after hyphens in compound words, as it is customary in English. If false, only whitespaces will be considered as potentially good places for line breaks, but you need to set `BreakLongWords` to false if you want truly insecable words.
 ### DropWhitespace
     public virtual bool DropWhitespace { get; set; }
 (default: `true`) If `true`, whitespace at the beginning and ending of every line (after wrapping but before indenting) is dropped. Whitespace at the beginning of the paragraph, however, is not dropped if non-whitespace follows it. If whitespace being dropped takes up an entire line, the whole line is dropped.
@@ -98,11 +99,12 @@ Since the sentence detection algorithm relies on finding English lowercase lette
     public virtual string InitialIndent { get; set; }
 (default: `String.Empty`) String that will be prepended to the first line of wrapped output. Counts towards the length of the first line. The empty string is not indented.
 ### MaxLines
-    public virtual int? MaxLines { get; set; } = null
-(default: `null`) If not null, then the output will contain at most MaxLines lines, with placeholder appearing at the end of the output.
+    public virtual int? MaxLines { get; set; }
+(default: `null`) If not null, then the output will contain at most `MaxLines` lines, with placeholder appearing at the end of the output.
 ### Placeholder
     public virtual string Placeholder { get; set; }
 (default: `" [...]"`) String that will appear at the end of the output text if it has been truncated.
+### ReplaceWhitespace
     public virtual bool ReplaceWhitespace { get; set; }
 (default: `true`) If `true`, after tab expansion but before wrapping, the wrap() method will replace each whitespace character with a single space. The whitespace characters replaced are as follows: tab, newline, vertical tab, formfeed, and carriage return ('\t\n\v\f\r').
 
