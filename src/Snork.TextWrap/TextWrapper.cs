@@ -58,10 +58,6 @@ namespace Snork.TextWrap
     /// </summary>
     public class TextWrapper
     {
-        static TextWrapper()
-        {
-        }
-
         //internal const string WordPunctuationRegexPattern = @"[\w!""\'&.,?]";
         internal const string WordPunctuationRegexPattern = @"[\w!""'&.,?]";
         internal const string LetterRegexPattern = @"[^\\d\\W]";
@@ -75,6 +71,7 @@ namespace Snork.TextWrap
         //    EmDashBetweenWordsPattern = $"(?<={WordPunctuationRegexPattern})-{{2,}}(?=\\w)";
         protected static readonly string
             EmDashBetweenWordsPattern = $"(?<={WordPunctuationRegexPattern}) -{{2,}} (?=\\\\w)";
+
         protected static readonly string HyphenatedWordRegexPattern =
             $"-(?: (?<={LetterRegexPattern}{{2}}-)|(?<={LetterRegexPattern}-{LetterRegexPattern}-))|(?= {LetterRegexPattern} -? {LetterRegexPattern})";
 
@@ -84,6 +81,7 @@ namespace Snork.TextWrap
         protected static readonly string WordPossiblyHyphenatedRegexPattern =
             //$"{NoWhitespaceRegexPattern}+?(?:{HyphenatedWordRegexPattern}|{EndOfWordRegexPattern}|{EmDashRegexPattern})";
             $"{NoWhitespaceRegexPattern}+?-(?:(?<={LetterRegexPattern}{{2}}-)|(?<={LetterRegexPattern}-[^\\d\\W]-))";
+
         protected static Regex WordSeparatorRegex =
             new Regex(
                 $"({AnyWhiteSpaceRegexPattern}|{EmDashBetweenWordsPattern}|{WordPossiblyHyphenatedRegexPattern})");
@@ -107,27 +105,25 @@ namespace Snork.TextWrap
         internal static string ExpandTabs(string input, int tabSize)
         {
             var stringBuilder = new StringBuilder();
-            var col = 0;
+            var column = 0;
             foreach (var character in input)
                 switch (character)
                 {
                     case '\n':
                     case '\r':
-                        col = 0;
+                        column = 0;
                         stringBuilder.Append(character);
                         break;
                     case '\t':
                         if (tabSize > 0)
                         {
-                            var tabs = tabSize - col % tabSize;
-
-                            for (var j = 0; j < tabs; j++) stringBuilder.Append(' ');
-                            col = 0;
+                            var tabs = tabSize - column % tabSize;
+                            stringBuilder.Append(new String(' ', tabs));
+                            column = 0;
                         }
-
                         break;
                     default:
-                        col++;
+                        column++;
                         stringBuilder.Append(character);
                         break;
                 }
@@ -147,33 +143,9 @@ namespace Snork.TextWrap
         /// <returns></returns>
         protected virtual string MungeWhitespace(string text)
         {
-            //var z = text.Length;
-            //var q = Hash(text);
-            //System.IO.File.WriteAllText("beforeExpandTabs.txt", text);
             if (Options.ExpandTabs) text = ExpandTabs(text, Options.TabSize);
-            //System.IO.File.WriteAllText("afterExpandTabs.txt", text);
-            //var r = Hash(text);
-            //var a = text.Length;
             if (Options.ReplaceWhitespace) text = Regex.Replace(text, WhitespaceRegexPattern, " ");
-            //var s = Hash(text);
-            //var c = text.Length;
-
             return text;
-        }
-
-        private static string Hash(string input)
-        {
-            using (var sha1 = new SHA1Managed())
-            {
-                var hash = sha1.ComputeHash(Encoding.UTF8.GetBytes(input));
-                var sb = new StringBuilder(hash.Length * 2);
-
-                foreach (var b in hash)
-                    // can be "x2" if you want lowercase
-                    sb.Append(b.ToString("X2"));
-
-                return sb.ToString();
-            }
         }
 
         /// <summary>
@@ -191,37 +163,11 @@ namespace Snork.TextWrap
         /// </summary>
         /// <param name="text"></param>
         /// <returns></returns>
-        protected virtual List<string> _split(string text)
+        protected virtual List<string> SplitByWordSeparators(string text)
         {
-            Regex toUse;
-            if (Options.BreakOnHyphens)
-                toUse = WordSeparatorRegex;
-            else
-                toUse = WordSeparatorSimpleRegex;
-
-            var chunks = PythonSplit(toUse, text).Where(i => i.Length > 0).ToList();
-
+            var regexToUse = Options.BreakOnHyphens ? WordSeparatorRegex : WordSeparatorSimpleRegex;
+            var chunks = regexToUse.Split(text).Where(i => i.Length > 0).ToList();
             return chunks;
-        }
-
-        private List<string> PythonSplit(Regex toUse, string text)
-        {
-            return toUse.Split(text).ToList();
-            var result = new List<string>();
-            var matches = toUse.Matches(text).Cast<Match>().ToList();
-            var spl = toUse.Split(text);
-            var last = 0;
-
-            foreach (var match in matches)
-            {
-                result.Add(text.Substring(last, match.Index - last));
-                result.Add(match.Groups[0].Value);
-                last = match.Index + match.Length;
-            }
-
-            if (last < text.Length) result.Add(text.Substring(last));
-
-            return result;
         }
 
         /// <summary>
@@ -259,7 +205,7 @@ namespace Snork.TextWrap
         /// <param name="start"></param>
         /// <param name="end"></param>
         /// <returns></returns>
-        private static int rfind(string input, char sub, int start, int end)
+        private static int RFind(string input, char sub, int start, int end)
         {
             for (var i = end; i >= start; i--)
                 if (input[i] == sub)
@@ -298,7 +244,7 @@ namespace Snork.TextWrap
                     // break after last hyphen, but only if there are
                     // non-hyphens before it
 
-                    var hyphen = rfind(chunk, '-', 0, spaceLeft);
+                    var hyphen = RFind(chunk, '-', 0, spaceLeft);
                     if (hyphen > 0 && chunk.Substring(0, hyphen).Any(i => i != '-')) end = hyphen + 1;
                 }
 
@@ -358,10 +304,7 @@ namespace Snork.TextWrap
                 var lineBuilder = new LineBuilder();
 
                 // Figure out which static string will prefix this line.
-                if (lines.Any())
-                    indent = Options.SubsequentIndent;
-                else
-                    indent = Options.InitialIndent;
+                indent = lines.Any() ? Options.SubsequentIndent : Options.InitialIndent;
                 // Maximum width for this line.
                 var width = Width - indent.Length;
                 // First chunk on line is whitespace -- drop it, unless this
@@ -372,36 +315,27 @@ namespace Snork.TextWrap
                     var l = chunks.Last().Length;
                     // Can at least squeeze this chunk onto the current line.
                     if (lineBuilder.Length + l <= width)
-                    {
                         lineBuilder.Add(Pop(chunks));
-                    }
                     else
-                    {
                         // Nope, this line is full.
                         break;
-                    }
                 }
 
                 // The current line is full, and the next chunk is too big to
                 // fit on *any* line (not just this one).
                 if (chunks.Any() && chunks.Last().Length > width)
-                {
                     HandleLongWord(chunks, lineBuilder, lineBuilder.Length, width);
-
-                }
 
                 // If the last chunk on this line is all whitespace, drop it.
                 if (Options.DropWhitespace && lineBuilder.Any() && string.IsNullOrWhiteSpace(lineBuilder.Last()))
-                {
                     lineBuilder.RemoveLast();
-                }
 
                 if (lineBuilder.Any())
                 {
                     if (Options.MaxLines == null || lines.Count + 1 < Options.MaxLines ||
-                        (!chunks.Any() ||
-                          Options.DropWhitespace && chunks.Count == 1 && string.IsNullOrWhiteSpace(chunks[0])) &&
-                        lineBuilder.Length <= width)
+                        ((!chunks.Any() ||
+                          (Options.DropWhitespace && chunks.Count == 1 && string.IsNullOrWhiteSpace(chunks[0]))) &&
+                         lineBuilder.Length <= width))
                     {
                         // Convert current line back to a string and store it in
                         // list of all lines (return value).
@@ -409,10 +343,9 @@ namespace Snork.TextWrap
                     }
                     else
                     {
-                        bool ended = false;
+                        var ended = false;
                         while (lineBuilder.Any())
                         {
-
                             if (!string.IsNullOrWhiteSpace(lineBuilder.Last()) &&
                                 lineBuilder.Length + Options.Placeholder.Count() <= width)
                             {
@@ -421,6 +354,7 @@ namespace Snork.TextWrap
                                 ended = true;
                                 break;
                             }
+
                             lineBuilder.RemoveLast();
                         }
 
@@ -435,6 +369,7 @@ namespace Snork.TextWrap
                                     break;
                                 }
                             }
+
                             lines.Add(indent + Options.Placeholder.TrimStart());
                         }
 
@@ -449,7 +384,7 @@ namespace Snork.TextWrap
         protected virtual List<string> SplitChunks(string text)
         {
             text = MungeWhitespace(text);
-            return _split(text);
+            return SplitByWordSeparators(text);
         }
 
 
@@ -463,7 +398,7 @@ namespace Snork.TextWrap
         /// </summary>
         /// <param name="text"></param>
         /// <returns></returns>
-        protected virtual List<string> _wrap(string text)
+        protected virtual List<string> _Wrap(string text)
         {
             var chunks = SplitChunks(text);
             if (Options.FixSentenceEndings) FixSentenceEndings(chunks);
@@ -479,9 +414,9 @@ namespace Snork.TextWrap
         /// </summary>
         /// <param name="text"></param>
         /// <returns></returns>
-        protected virtual string _fill(string text)
+        protected virtual string _Fill(string text)
         {
-            return string.Join("\r\n", _wrap(text));
+            return string.Join(Environment.NewLine, _Wrap(text));
         }
 
         /// <summary>
@@ -510,7 +445,7 @@ namespace Snork.TextWrap
                 }
             }
 
-            return string.Join("\r\n", result);
+            return string.Join(Environment.NewLine, result);
         }
 
         /// <summary>
@@ -532,7 +467,7 @@ namespace Snork.TextWrap
         public static string Shorten(string text, int width, ShortenTextWrapperOptions? options = null)
         {
             var w = new TextWrapper(width, options ?? new ShortenTextWrapperOptions());
-            return w._fill(string.Join(" ", split(text.Trim())));
+            return w._Fill(string.Join(" ", SplitByWhitespace(text.Trim())));
         }
 
         /// <summary>
@@ -556,7 +491,7 @@ namespace Snork.TextWrap
             // all lines.
             string? margin = null;
             text = WhitespaceOnlyRegex.Replace(text, string.Empty);
-            var indents = LeadingWhitespaceRegex.Matches(text).Cast<Match>().Select(i => i.Groups[0].Value)
+            var indents = LeadingWhitespaceRegex.Matches(text).Select(i => i.Groups[0].Value)
                 .ToList();
             foreach (var indent in indents)
                 if (margin == null)
@@ -582,7 +517,7 @@ namespace Snork.TextWrap
                         .Join(indent.Select((value, index) => new { Value = value, Index = index }), i => i.Index,
                             i => i.Index,
                             (aElement, bElement) => new
-                            { Index = aElement.Index, Item1 = aElement.Value, Item2 = bElement.Value }).ToList();
+                                { aElement.Index, Item1 = aElement.Value, Item2 = bElement.Value }).ToList();
                     var c = valueTuples.FirstOrDefault(i => i.Item1 != i.Item2);
                     if (c != null) margin = margin.Substring(c.Index);
                 }
@@ -610,7 +545,7 @@ namespace Snork.TextWrap
             TextWrapperOptions? options = null)
         {
             var w = new TextWrapper(width, options);
-            return w._wrap(text);
+            return w._Wrap(text);
         }
 
         /// <summary>
@@ -630,15 +565,20 @@ namespace Snork.TextWrap
             TextWrapperOptions? options = null)
         {
             var w = new TextWrapper(width, options);
-            return w._fill(text);
+            return w._Fill(text);
         }
 
         protected static Regex NoWhitespaceRegex =
             new Regex($"{NoWhitespaceRegexPattern}+");
 
-        protected static List<string> split(string input)
+        /// <summary>
+        /// Split using whitespace between words
+        /// </summary>
+        /// <param name="input"></param>
+        /// <returns></returns>
+        protected static List<string> SplitByWhitespace(string input)
         {
-            return NoWhitespaceRegex.Matches(input).Cast<Match>().Select(i => i.Groups[0].Value).ToList();
+            return NoWhitespaceRegex.Matches(input).Select(i => i.Groups[0].Value).ToList();
         }
 
         protected static T Pop<T>(List<T> list)

@@ -9,6 +9,8 @@ import re
 import json
 import random
 import hashlib;
+import os
+import glob
 
 __all__ = ['TextWrapper', 'wrap', 'fill', 'dedent', 'indent', 'shorten']
 
@@ -98,8 +100,6 @@ class TextWrapper:
             )
         )''' % {'wp': word_punct, 'lt': letter,
                 'ws': whitespace, 'nws': nowhitespace}
-    with open("wordsep.txt", 'wb') as f:
-            f.write(bytes(wordsep, 'utf-8')) 
     wordsep_re = re.compile(wordsep,
         re.VERBOSE)
     del word_punct, letter, nowhitespace
@@ -511,13 +511,20 @@ def indent(text, prefix, predicate=None):
 if __name__ == "__main__":
     #print dedent("\tfoo\n\tbar")
     #print dedent("  \thello there\n  \t  how are you?")
+    textoptions = []
+    for file in glob.glob("text*.txt"):
+        with open(file) as f:
+            lines = f.read()
+            textoptions.append(lines)
 
     singleCase = ""
     #singleCase = "014b0260cb773578b0d9881d37b45c4a30335753"
+
+    
+    #//text1 = 'The high-speed train from London to Paris takes only 2 hours and 16 minutes. John\'s new part-time job helps buy treats for his puppy. The run-down apartment building looked unsafe for anyone. Kyla needs the up-to-date SEO guidelines. These words are hyphenated to modify a noun and when used as adjectives, but not as adverbs. She is a part-time French teacher. She teaches French part time. Just to complicate matters, spellcheck and editing software cannot distinguish between compound adjectives and other uses, so you need to know your hyphen usage.';
+    #text2 = 'Lorem \t ipsum \vdolor\r\n sit amet, consectetur adipiscing elit. In sodales nulla nunc, ac tincidunt felis facilisis  \t eget. Aenean quis nisi eu lacus \t varius eleifend sed sit amet mi. Morbi pulvinar lacus vitae bibendum fermentum. Praesent consequat dictum nisl. Mauris non tellus ac ligula elementum pellentesque. Quisque ornare libero odio, quis porttitor lectus pretium vel. Donec nec nisl bibendum, hendrerit lacus at, imperdiet justo. Sed aliquam condimentum velit, non convallis purus ultrices sit amet. Cras ut vulputate velit, \v cursus blandit ante. Pellentesque sit amet lacinia tortor, eget pretium felis. Cras pretium dui semper eros ultricies, vel efficitur elit convallis. Curabitur iaculis diam ac mi imperdiet, vitae dictum diam ultrices. Fusce ut convallis purus. Vivamus sit amet dapibus turpis. Lorem ipsum dolor sit amet, consectetur adipiscing elit.'
+    #textoptions=[text1, text2]
     testCases = []
-    text1 = 'The high-speed train from London to Paris takes only 2 hours and 16 minutes. John\'s new part-time job helps buy treats for his puppy. The run-down apartment building looked unsafe for anyone. Kyla needs the up-to-date SEO guidelines. These words are hyphenated to modify a noun and when used as adjectives, but not as adverbs. She is a part-time French teacher. She teaches French part time. Just to complicate matters, spellcheck and editing software cannot distinguish between compound adjectives and other uses, so you need to know your hyphen usage.';
-    text2 = 'Lorem \t ipsum \vdolor\r\n sit amet, consectetur adipiscing elit. In sodales nulla nunc, ac tincidunt felis facilisis  \t eget. Aenean quis nisi eu lacus \t varius eleifend sed sit amet mi. Morbi pulvinar lacus vitae bibendum fermentum. Praesent consequat dictum nisl. Mauris non tellus ac ligula elementum pellentesque. Quisque ornare libero odio, quis porttitor lectus pretium vel. Donec nec nisl bibendum, hendrerit lacus at, imperdiet justo. Sed aliquam condimentum velit, non convallis purus ultrices sit amet. Cras ut vulputate velit, \v cursus blandit ante. Pellentesque sit amet lacinia tortor, eget pretium felis. Cras pretium dui semper eros ultricies, vel efficitur elit convallis. Curabitur iaculis diam ac mi imperdiet, vitae dictum diam ultrices. Fusce ut convallis purus. Vivamus sit amet dapibus turpis. Lorem ipsum dolor sit amet, consectetur adipiscing elit.'
-    textoptions=[text1, text2]
     tabsizes=[4,8]
     functions=['wrap', 'fill','shorten']
     placeholders=['[...]','...']
@@ -525,6 +532,7 @@ if __name__ == "__main__":
     indents=['','    ','        ']
     bools=[False,True]
     for func in functions:
+        print('Making test case for '+ func)
         testCases = []
         if func=='shorten':
             maxlineoptions=[1]
@@ -569,10 +577,10 @@ if __name__ == "__main__":
                                                                 data["expected"]=fill(text,width,expand_tabs=expand_tabs,placeholder=placeholder, replace_whitespace=replace_whitespace,max_lines=max_lines, fix_sentence_endings=fix_sentence_endings, break_on_hyphens=break_on_hyphens,drop_whitespace=drop_whitespace, tabsize = tabsize, break_long_words = break_long_words, initial_indent = initial_indent, subsequent_indent = subsequent_indent)
                                                             else:
                                                                 data["expected"]=shorten(text,width,expand_tabs=expand_tabs,placeholder=placeholder, replace_whitespace=replace_whitespace, fix_sentence_endings=fix_sentence_endings, break_on_hyphens=break_on_hyphens,drop_whitespace=drop_whitespace, tabsize = tabsize, break_long_words = break_long_words, initial_indent = initial_indent, subsequent_indent = subsequent_indent)    
-                                                                testCases.append(data)
-         if len(singleCase)>0:
+                                                        testCases.append(data)
+        if len(singleCase)==0:
             with open("../Snork.TextWrap.Tests/" + func + '.json', 'w') as f:
                 f.write(json.dumps(testCases, indent=4))
-            print("wrote file " + func + ".json")
+                print("wrote file " + func + ".json")
         
         

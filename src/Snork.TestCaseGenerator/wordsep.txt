@@ -1,0 +1,19 @@
+
+        ( # any whitespace
+          [\	\
+\\\\ ]+
+        | # em-dash between words
+          (?<=[\w!"\'&.,?]) -{2,} (?=\w)
+        | # word, possibly hyphenated
+          [^\	\
+\\\\ ]+? (?:
+            # hyphenated word
+              -(?: (?<=[^\d\W]{2}-) | (?<=[^\d\W]-[^\d\W]-))
+              (?= [^\d\W] -? [^\d\W])
+            | # end of word
+              (?=[\	\
+\\\\ ]|\Z)
+            | # em-dash
+              (?<=[\w!"\'&.,?]) (?=-{2,}\w)
+            )
+        )

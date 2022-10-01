@@ -9,12 +9,11 @@ namespace Snork.TextWrap
         {
             return _items.Any();
         }
+
         private readonly List<string> _items = new List<string>();
         private int _length;
-        public int Length
-        {
-            get { return _length; }
-        }
+        public int Length => _length;
+
         public void Add(string item)
         {
             _items.Add(item);
@@ -25,10 +24,12 @@ namespace Snork.TextWrap
         {
             return string.Concat(_items);
         }
+
         public string Last()
         {
             return _items.Last();
         }
+
         public void RemoveLast()
         {
             _items.RemoveAt(_items.Count - 1);
