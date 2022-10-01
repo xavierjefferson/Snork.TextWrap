@@ -48,12 +48,12 @@ This library is a port of the fantastic Python [*textwrap*](https://docs.python.
 ## Usage:
 
 ### Wrap
-    public static List<string> Wrap(string text, int width = TextWrapperDefaults.Width, TextWrapperOptions? options = null)
+    public static List<string> Wrap(string text, int width = 70, TextWrapperOptions? options = null)
 
 Wrap a single paragraph of text, returning a list of wrapped lines. Reformat the single paragraph in 'text' so it fits in lines of no  more than 'width' columns, and return a list of wrapped lines.  By default, tabs in 'text' are expanded, and all other whitespace characters (including newline) are converted to space.  See TextWrapperOptions class below for available properties to customize wrapping behavior.
 
 ### Fill
-     public static string Fill(string text, int width = TextWrapperDefaults.Width, TextWrapperOptions? options = null)
+     public static string Fill(string text, int width = 70, TextWrapperOptions? options = null)
 
 Fill a single paragraph of text, returning a new string. Reformat the single paragraph in 'text' to fit in lines of no more than 'width' columns, and return a new string containing the entire wrapped paragraph.  As with wrap(), tabs are expanded and other whitespace characters converted to space.  See TextWrapperOptions class for available properties to customize wrapping behavior.
 
